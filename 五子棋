@@ -1,0 +1,240 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<stdio.h>
+#include<math.h>
+#include<stdlib.h>
+#include<string.h>
+#include<graphics.h>  //图形库头文件
+#include<mmsystem.h>  //多媒体头文件
+#pragma comment(lib,"winmm.lib")//播放音乐库文件
+#include"hanshu.h"
+#pragma once
+int menu();
+void initGame();
+void playGame();
+int judge(int a, int b);
+void loadGame(int a,int b);
+int main();
+void keepGame();
+int menu()
+{
+	int request;
+	printf("**************************************************************************************\n");
+	printf("                              1.开始游戏                                               \n");
+	printf("                              2.继续游戏                                               \n");
+	printf("                              3.排行榜                                                 \n");
+	printf("                              4.退出游戏                                               \n");
+	printf("**************************************************************************************\n");
+	printf("请输入你的操作：\n");
+	scanf_s("%d", &request);
+	return request;
+}
+void initGame()
+{
+	int i, j;
+	//绘图环境 库函数
+	initgraph(400, 300);
+	setbkcolor(WHITE);
+	loadimage(NULL, "棋盘背景.jpg");
+	//添加背景音乐
+	mciSendString("open music.wav", 0, 0, 0);
+	mciSendString("play music.wav", 0, 0, 0);
+	//绘制棋盘
+	//画线
+
+	setlinecolor(BLACK);
+	settextcolor(BLACK);
+	for (int i = 20; i <= 300; i += 20)
+	{
+		line(i, 0, i, 300);
+		line(0, i, 300, i);
+	}
+	outtextxy(305, 100, "玩家1:黑棋");
+	outtextxy(305, 200, "玩家2:白棋");
+	outtextxy(305, 150, "悔棋");
+}
+
+int flag = 0;
+int board[15][15] = { 0 };
+void playGame()
+{
+	int x = NULL, y = NULL;
+	int a = NULL, b = NULL;
+	int k = NULL, z = NULL;
+	MOUSEMSG m;
+	while (1)
+	{
+		m = GetMouseMsg();  //获取一个鼠标消息
+		
+		
+			for (int i = 1; i <=15; i++) {
+				for (int j = 1; j <=15; j++) {
+					if (abs(m.x - i * 20) < 10 && abs(m.y - j * 20) < 10)
+					{
+						x = i * 20;
+						y = j * 20;
+						a = i;
+						b = j;
+
+					}
+				}
+			}
+		
+		//鼠标左键按下
+			if (m.uMsg == WM_LBUTTONDOWN)
+			{
+				if (m.x >= 10 && m.x <= 300 && m.y >= 10 && m.y <= 300) {
+
+
+					if (board[a][b] != 0)
+					{
+						continue;
+					}
+					//实现黑白交替
+					if (flag % 2 == 0) {
+						setfillcolor(BLACK);
+						solidcircle(x, y, 10); //确保落子在棋盘交线上
+						board[a][b] = 1;
+						k++;
+					}
+					else {
+						setfillcolor(WHITE);
+						solidcircle(x, y, 10); //确保落子在棋盘交线上
+						board[a][b] = 2;
+						z++;
+					}
+					flag++;
+				}
+			}
+		if (judge(a, b)) {
+			if (flag % 2 == 0) {
+				MessageBox(NULL, "白棋胜利！", "游戏结束", MB_OK);
+				return;
+			}
+			else {
+				MessageBox(NULL, "黑棋胜利！", "游戏结束", MB_OK);
+				return;
+			}
+
+		}
+		loadGame(x,y);
+
+
+
+
+
+	}
+}
+
+int judge(int a, int b)
+{
+	int i, j;
+	int t = 2 - flag % 2;
+	for (i = a - 4, j = b; i <= a; i++)
+	{
+		if (i >= 0 && i < 16 && t == board[i][j] && t == board[i + 1][j] && t == board[i + 2][j] && t == board[i + 3][j] && t == board[i + 4][j])
+			return 1;
+	}
+	for (i = a, j = b - 4; j <= b; j++)
+	{
+		if (j >= 0 && j < 16 && t == board[i][j] && t == board[i][j + 1] && t == board[i][j + 2] && t == board[i][j + 3] && t == board[i][j + 4])
+			return 1;
+	}
+	for (i = a - 4; i <= a; i++)
+		for (j = b - 4; j <= b; j++)
+		{
+			if (i >= 0 && i < 16 && j >= 0 && j < 16 && t == board[i][j] && t == board[i + 1][j + 1] && t == board[i + 2][j + 2] && t == board[i + 3][j + 3] && t == board[i + 4][j + 4])
+				return 1;
+		}
+	for (i = a - 4; i <= a; i++)
+		for (j = b + 4; j >= 1; j--)
+		{
+			if (i >= 0 && i < 16 && j >= 0 && j < 16 && t == board[i][j] && t == board[i + 1][j - 1] && t == board[i + 2][j - 2] && t == board[i + 3][j - 3] && t == board[i + 4][j - 4])
+				return 1;
+		}
+
+	return 0;
+
+
+}
+
+
+void loadGame(int a,int b)
+{
+	FILE* fp;
+	FILE* outfile;
+	int i, j;
+	if (a == 305 && b == 150) {
+		playGame();
+	}
+	return;
+	fp = fopen("copy.txt", "w");
+	outfile = fopen("flag.txt", "r");
+	/*if (outfile == NULL) {
+		printf("no!");
+	}*/
+
+	for (i = 1; i <= 15; i++)
+		for (j = 1; j <= 15; j++)
+		{
+			fprintf(fp, "%d\t", board[i][j]);
+		}
+	fclose(fp);
+	
+}
+void keepGame() {
+		FILE* fp;
+		int i, j;
+		fp = fopen("copy.txt", "r");
+		if (fp == NULL) {
+			MessageBox(NULL, "游戏不存在！", "游戏结束", MB_OK);
+		}
+		;
+		for (i = 1; i <= 15; i++)
+			for (j = 1; j <= 15; j++)
+			{
+				fscanf(fp, "%d", &board[i][j]);
+			}
+		fclose(fp);
+
+		initGame();
+		for (i = 1; i <= 15; i++)
+			for (j = 1; j <= 15; j++)
+			{
+				if (board[i][j] != 0) {
+					flag++;   //保证黑棋白棋的数量
+				}
+				if (board[i][j] == 1) {
+					setfillcolor(BLACK);
+					solidcircle(i*20, j*20, 10);
+				}
+				if (board[i][j] == 2) {
+					setfillcolor(WHITE);
+					solidcircle(i * 20, j * 20, 10);
+				}
+			}
+		playGame();
+		system("pause"); //防止闪退
+	
+}
+
+
+int main()
+{
+	int m;
+	m = menu();
+	switch (m)
+	{
+	case 1:initGame();
+		playGame();
+		break;
+	case 2: keepGame();
+		break;
+	case 3:
+		break;
+	case 4:
+		break;
+	default:printf("你输入了错误的数字，请重新输入。");
+		break;
+	}
+	return 0;
+}
